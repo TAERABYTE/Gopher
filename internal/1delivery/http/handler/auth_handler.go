@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"go-minimal-backend/internal/domain"
+	"go-minimal-backend/internal/4domain"
 	"go-minimal-backend/pkg/response"
 )
 
@@ -54,7 +54,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.authUsecase.Login(r.Context(), req.Username, req.Password)
+	user, token, err := h.authUsecase.Login(r.Context(), req.Username, req.Password)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCreds) {
 			response.Error(w, http.StatusUnauthorized, "Invalid credentials")
@@ -64,5 +64,5 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"token": token})
+	response.JSON(w, http.StatusOK, map[string]string{"username": user.Username, "token": token, })
 }

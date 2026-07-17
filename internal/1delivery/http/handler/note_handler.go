@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"go-minimal-backend/internal/delivery/http/middleware"
-	"go-minimal-backend/internal/domain"
+	"go-minimal-backend/internal/1delivery/http/middleware"
+	"go-minimal-backend/internal/4domain"
 	"go-minimal-backend/pkg/response"
 )
 

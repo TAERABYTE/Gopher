@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"go-minimal-backend/internal/domain"
+	"go-minimal-backend/internal/4domain"
 	appjwt "go-minimal-backend/pkg/jwt"
 
 	"golang.org/x/crypto/bcrypt"
@@ -42,18 +42,18 @@ func (a *authUsecase) ValidateCredentials(ctx context.Context, username, passwor
 	return user, nil
 }
 
-func (a *authUsecase) Login(ctx context.Context, username, password string) (string, error) {
+func (a *authUsecase) Login(ctx context.Context, username, password string) (*domain.User, string, error) {
 	user, err := a.ValidateCredentials(ctx, username, password)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
 	token, err := appjwt.GenerateToken(user.ID, user.Username, user.Role, a.jwtSecret, a.tokenExpir)
 	if err != nil {
-		return "", domain.ErrInternalServer
+		return nil, "", domain.ErrInternalServer
 	}
 
-	return token, nil
+	return user, token, nil
 }
 
 func (a *authUsecase) Register(ctx context.Context, username, password, role string) error {

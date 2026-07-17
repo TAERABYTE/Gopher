@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"go-minimal-backend/internal/domain"
+	"go-minimal-backend/internal/4domain"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

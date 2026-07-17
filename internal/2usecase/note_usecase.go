@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"go-minimal-backend/internal/domain"
+	"go-minimal-backend/internal/4domain"
 )
 
 type noteUsecase struct {

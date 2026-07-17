@@ -3,9 +3,9 @@ package http
 import (
 	"net/http"
 
-	"go-minimal-backend/internal/delivery/http/handler"
-	"go-minimal-backend/internal/delivery/http/middleware"
-	"go-minimal-backend/internal/domain"
+	"go-minimal-backend/internal/1delivery/http/handler"
+	"go-minimal-backend/internal/1delivery/http/middleware"
+	"go-minimal-backend/internal/4domain"
 )
 
 func NewRouter(authHandler *handler.AuthHandler, noteHandler *handler.NoteHandler, jwtSecret string) *http.ServeMux {

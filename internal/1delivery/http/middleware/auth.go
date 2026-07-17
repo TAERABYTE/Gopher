@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"go-minimal-backend/internal/domain"
+	"go-minimal-backend/internal/4domain"
 	appjwt "go-minimal-backend/pkg/jwt"
 	"go-minimal-backend/pkg/response"
 )

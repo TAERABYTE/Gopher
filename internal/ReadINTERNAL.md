@@ -9,6 +9,6 @@
 ภายในจะแบ่งโครงสร้างย่อยแบบ **Clean Architecture**: delivery -> usecase -> repository -> domain
 - `config/` - ตัวจัดการการตั้งค่า (.env)
 - `delivery/` - ประตูรับคนไข้ (HTTP)
-- `domain/` - โครงสร้างข้อมูลหลัก (พระเอกของงาน)
-- `repository/` - ห้องเก็บประวัติ (Database)
 - `usecase/` - หมอวินิจฉัยโรค (Business Logic)
+- `repository/` - ห้องเก็บประวัติ (Database)
+- `domain/` - โครงสร้างข้อมูลหลัก (พระเอกของงาน)

@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"go-minimal-backend/internal/config"
-	router "go-minimal-backend/internal/delivery/http"
-	"go-minimal-backend/internal/delivery/http/handler"
-	"go-minimal-backend/internal/repository/postgres"
-	"go-minimal-backend/internal/usecase"
+	"go-minimal-backend/internal/0config"
+	router "go-minimal-backend/internal/1delivery/http"
+	"go-minimal-backend/internal/1delivery/http/handler"
+	"go-minimal-backend/internal/3repository/postgres"
+	"go-minimal-backend/internal/2usecase"
 )
 
 func main() {
