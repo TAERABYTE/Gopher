@@ -19,6 +19,9 @@ func NewRouter(authHandler *handler.AuthHandler, noteHandler *handler.NoteHandle
 
 	// Protected routes (Notes CRUD)
 	// We wrap the specific handler functions with the auth middleware
+
+	// กรณีที่ไม่ต้องมีการเช็ค auth middleware
+	// mux.HandleFunc("GET /api/notes", noteHandler.List)
 	mux.Handle("GET /api/notes", authMw(http.HandlerFunc(noteHandler.List)))
 	mux.Handle("POST /api/notes", authMw(http.HandlerFunc(noteHandler.Create)))
 	mux.Handle("GET /api/notes/{id}", authMw(http.HandlerFunc(noteHandler.GetByID)))
