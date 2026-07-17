@@ -8,7 +8,7 @@ import (
 	"go-minimal-backend/internal/4domain"
 )
 
-func NewRouter(authHandler *handler.AuthHandler, noteHandler *handler.NoteHandler, jwtSecret string) *http.ServeMux {
+func NewRouter(authHandler *handler.AuthHandler, noteHandler *handler.NoteHandler, jwtSecret string, corsAllowedOrigins []string) http.Handler {
 	mux := http.NewServeMux()
 
 	authMw := middleware.Auth(jwtSecret)
@@ -30,5 +30,7 @@ func NewRouter(authHandler *handler.AuthHandler, noteHandler *handler.NoteHandle
 	// Example of an Admin-only route
 	mux.Handle("DELETE /api/notes/{id}", authMw(middleware.RequireRole(domain.RoleAdmin)(http.HandlerFunc(noteHandler.Delete))))
 
-	return mux
+	// CORS ต้องห่อ mux ทั้งตัวเป็นชั้นนอกสุด เพื่อดัก preflight (OPTIONS) ของทุก route
+	// ก่อนที่จะไปถึง mux (ซึ่งไม่มี route ของ OPTIONS ผูกไว้ จะตอบ 404 ถ้าไม่ดักไว้ก่อน)
+	return middleware.CORS(corsAllowedOrigins)(mux)
 }

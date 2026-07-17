@@ -3,14 +3,16 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	DB_DSN     string
-	JWT_SECRET string
-	PORT       string
+	DB_DSN               string
+	JWT_SECRET           string
+	PORT                 string
+	CORS_ALLOWED_ORIGINS []string
 }
 
 func Load() *Config {
@@ -27,6 +29,15 @@ func Load() *Config {
 
 	if cfg.PORT == "" {
 		cfg.PORT = "5000"
+	}
+
+	origins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if origins == "" {
+		cfg.CORS_ALLOWED_ORIGINS = []string{"*"}
+	} else {
+		for _, o := range strings.Split(origins, ",") {
+			cfg.CORS_ALLOWED_ORIGINS = append(cfg.CORS_ALLOWED_ORIGINS, strings.TrimSpace(o))
+		}
 	}
 
 	if cfg.DB_DSN == "" {

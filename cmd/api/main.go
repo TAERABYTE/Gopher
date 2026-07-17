@@ -8,8 +8,8 @@ import (
 	"go-minimal-backend/internal/0config"
 	router "go-minimal-backend/internal/1delivery/http"
 	"go-minimal-backend/internal/1delivery/http/handler"
-	"go-minimal-backend/internal/3repository/postgres"
 	"go-minimal-backend/internal/2usecase"
+	"go-minimal-backend/internal/3repository/postgres"
 )
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 	noteHandler := handler.NewNoteHandler(noteUseCase)
 
 	// 6. Setup Router
-	mux := router.NewRouter(authHandler, noteHandler, cfg.JWT_SECRET)
+	mux := router.NewRouter(authHandler, noteHandler, cfg.JWT_SECRET, cfg.CORS_ALLOWED_ORIGINS)
 
 	// 7. Start Server
 	log.Printf("Starting server on port %s", cfg.PORT)
