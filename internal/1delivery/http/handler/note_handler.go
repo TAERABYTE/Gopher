@@ -3,12 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"go-minimal-backend/internal/1delivery/http/middleware"
 	"go-minimal-backend/internal/4domain"
+	"go-minimal-backend/pkg/reqctx"
 	"go-minimal-backend/pkg/response"
 )
 
@@ -71,7 +73,7 @@ func (h *NoteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetUserFromContext(r.Context())
 	if user == nil {
 		// ไม่มี user แปลว่ายังไม่ได้ login หรือ token ไม่ถูกต้อง ตอบ 401 แล้วจบทันที (return)
-		response.Error(w, http.StatusUnauthorized, "Unauthorized")
+		response.Error(w, r, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -79,13 +81,13 @@ func (h *NoteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createNoteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		// body ไม่ใช่ JSON ที่ถูกต้อง หรือ field ผิด type ตอบ 400 Bad Request
-		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+		response.Error(w, r, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
 	// เช็ค required/ความยาว ก่อนส่งต่อไปชั้น usecase (ดู Validate() ด้านบน)
 	if errs := req.Validate(); len(errs) > 0 {
-		response.ValidationErrors(w, errs)
+		response.ValidationErrors(w, r, errs)
 		return
 	}
 
@@ -100,7 +102,8 @@ func (h *NoteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// เรียก business logic ชั้น usecase (h.noteUsecase.Create ใน note_usecase.go)
 	// ซึ่งจะไปเรียก noteRepo.Create ต่อ (ใน note_repo.go) เพื่อ insert ลง Postgres จริง
 	if err := h.noteUsecase.Create(r.Context(), note); err != nil {
-		response.Error(w, http.StatusInternalServerError, "Failed to create note")
+		log.Printf("[%s] note: create failed: %v", reqctx.RequestID(r.Context()), err)
+		response.Error(w, r, http.StatusInternalServerError, "Failed to create note")
 		return
 	}
 
@@ -112,7 +115,7 @@ func (h *NoteHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *NoteHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetUserFromContext(r.Context())
 	if user == nil {
-		response.Error(w, http.StatusUnauthorized, "Unauthorized")
+		response.Error(w, r, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -122,7 +125,7 @@ func (h *NoteHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// id ที่ได้จาก URL เป็น string เสมอ ต้องแปลงเป็น int ก่อนเอาไปใช้เทียบกับ DB
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid note ID")
+		response.Error(w, r, http.StatusBadRequest, "Invalid note ID")
 		return
 	}
 
@@ -132,11 +135,12 @@ func (h *NoteHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		// errors.Is เช็คว่า err ที่ได้กลับมา "คือ" domain.ErrNotFound หรือเปล่า
 		// (ค่านี้ถูก set มาจากชั้น repository ตอนที่ query ไม่เจอแถวไหนเลย)
 		if errors.Is(err, domain.ErrNotFound) {
-			response.Error(w, http.StatusNotFound, "Note not found")
+			response.Error(w, r, http.StatusNotFound, "Note not found")
 			return
 		}
 		// error อื่นๆ ที่ไม่ใช่ "ไม่เจอ" (เช่น DB ล่ม) ถือเป็น 500
-		response.Error(w, http.StatusInternalServerError, "Failed to get note")
+		log.Printf("[%s] note: get failed: %v", reqctx.RequestID(r.Context()), err)
+		response.Error(w, r, http.StatusInternalServerError, "Failed to get note")
 		return
 	}
 
@@ -147,14 +151,15 @@ func (h *NoteHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (h *NoteHandler) List(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetUserFromContext(r.Context())
 	if user == nil {
-		response.Error(w, http.StatusUnauthorized, "Unauthorized")
+		response.Error(w, r, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	// เรียก usecase.List -> repo.ListByUserID (ใน note_repo.go)
 	notes, err := h.noteUsecase.List(r.Context(), user.ID)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, "Failed to list notes")
+		log.Printf("[%s] note: list failed: %v", reqctx.RequestID(r.Context()), err)
+		response.Error(w, r, http.StatusInternalServerError, "Failed to list notes")
 		return
 	}
 
@@ -173,14 +178,14 @@ func (h *NoteHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *NoteHandler) Update(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetUserFromContext(r.Context())
 	if user == nil {
-		response.Error(w, http.StatusUnauthorized, "Unauthorized")
+		response.Error(w, r, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid note ID")
+		response.Error(w, r, http.StatusBadRequest, "Invalid note ID")
 		return
 	}
 
@@ -188,12 +193,12 @@ func (h *NoteHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// (title, content) ไม่จำเป็นต้องสร้าง struct request แยกอีกตัว
 	var req createNoteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+		response.Error(w, r, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
 	if errs := req.Validate(); len(errs) > 0 {
-		response.ValidationErrors(w, errs)
+		response.ValidationErrors(w, r, errs)
 		return
 	}
 
@@ -210,10 +215,11 @@ func (h *NoteHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// repository เป็นคนเช็คเองว่า id + user_id นี้ match แถวไหนไหม ถ้าไม่ match จะได้ ErrNotFound กลับมา
 	if err := h.noteUsecase.Update(r.Context(), note); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			response.Error(w, http.StatusNotFound, "Note not found")
+			response.Error(w, r, http.StatusNotFound, "Note not found")
 			return
 		}
-		response.Error(w, http.StatusInternalServerError, "Failed to update note")
+		log.Printf("[%s] note: update failed: %v", reqctx.RequestID(r.Context()), err)
+		response.Error(w, r, http.StatusInternalServerError, "Failed to update note")
 		return
 	}
 
@@ -230,14 +236,14 @@ func (h *NoteHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *NoteHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetUserFromContext(r.Context())
 	if user == nil {
-		response.Error(w, http.StatusUnauthorized, "Unauthorized")
+		response.Error(w, r, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid note ID")
+		response.Error(w, r, http.StatusBadRequest, "Invalid note ID")
 		return
 	}
 
@@ -245,10 +251,11 @@ func (h *NoteHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	// ถ้าไม่มีแถวไหนถูกลบ (ไม่เจอ หรือไม่ใช่เจ้าของ) จะได้ domain.ErrNotFound กลับมา
 	if err := h.noteUsecase.Delete(r.Context(), id, user.ID); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			response.Error(w, http.StatusNotFound, "Note not found")
+			response.Error(w, r, http.StatusNotFound, "Note not found")
 			return
 		}
-		response.Error(w, http.StatusInternalServerError, "Failed to delete note")
+		log.Printf("[%s] note: delete failed: %v", reqctx.RequestID(r.Context()), err)
+		response.Error(w, r, http.StatusInternalServerError, "Failed to delete note")
 		return
 	}
 

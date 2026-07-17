@@ -19,20 +19,20 @@ func Auth(jwtSecret string) func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				response.Error(w, http.StatusUnauthorized, "Missing authorization header")
+				response.Error(w, r, http.StatusUnauthorized, "Missing authorization header")
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-				response.Error(w, http.StatusUnauthorized, "Invalid authorization header format")
+				response.Error(w, r, http.StatusUnauthorized, "Invalid authorization header format")
 				return
 			}
 
 			tokenStr := parts[1]
 			claims, err := appjwt.ValidateToken(tokenStr, jwtSecret)
 			if err != nil {
-				response.Error(w, http.StatusUnauthorized, "Invalid or expired token")
+				response.Error(w, r, http.StatusUnauthorized, "Invalid or expired token")
 				return
 			}
 
@@ -64,7 +64,7 @@ func RequireRole(requiredRoles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user := GetUserFromContext(r.Context())
 			if user == nil {
-				response.Error(w, http.StatusUnauthorized, "Unauthorized")
+				response.Error(w, r, http.StatusUnauthorized, "Unauthorized")
 				return
 			}
 
@@ -77,7 +77,7 @@ func RequireRole(requiredRoles ...string) func(http.Handler) http.Handler {
 			}
 
 			if !hasRole {
-				response.Error(w, http.StatusForbidden, "Forbidden: insufficient permissions")
+				response.Error(w, r, http.StatusForbidden, "Forbidden: insufficient permissions")
 				return
 			}
 

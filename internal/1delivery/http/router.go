@@ -32,5 +32,9 @@ func NewRouter(authHandler *handler.AuthHandler, noteHandler *handler.NoteHandle
 
 	// CORS ต้องห่อ mux ทั้งตัวเป็นชั้นนอกสุด เพื่อดัก preflight (OPTIONS) ของทุก route
 	// ก่อนที่จะไปถึง mux (ซึ่งไม่มี route ของ OPTIONS ผูกไว้ จะตอบ 404 ถ้าไม่ดักไว้ก่อน)
-	return middleware.CORS(corsAllowedOrigins)(mux)
+	handler := middleware.CORS(corsAllowedOrigins)(mux)
+
+	// RequestID ต้องเป็นชั้นนอกสุดจริงๆ (ห่อรอบ CORS อีกที) เพื่อให้ทุก request ที่เข้ามา
+	// (รวมถึง preflight OPTIONS) มี request ID ผูกไว้ตั้งแต่ต้นทาง ก่อนจะไหลผ่าน layer อื่น
+	return middleware.RequestID(handler)
 }
