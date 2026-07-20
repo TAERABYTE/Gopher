@@ -13,9 +13,13 @@ func NewRouter(authHandler *handler.AuthHandler, noteHandler *handler.NoteHandle
 
 	authMw := middleware.Auth(jwtSecret)
 
+	// จำกัด 1 request/วินาทีเฉลี่ยต่อ IP (ยิงรัวได้ 5 ครั้งแรกก่อนโดนบล็อก) เฉพาะ endpoint auth
+	// ป้องกัน brute-force เดารหัสผ่าน/สแปมสมัครสมาชิก (ดู ratelimit.go)
+	authRateLimit := middleware.RateLimiter(1, 5)
+
 	// Public routes
-	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
-	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+	mux.Handle("POST /api/auth/register", authRateLimit(http.HandlerFunc(authHandler.Register)))
+	mux.Handle("POST /api/auth/login", authRateLimit(http.HandlerFunc(authHandler.Login)))
 
 	// Protected routes (Notes CRUD)
 	// We wrap the specific handler functions with the auth middleware
